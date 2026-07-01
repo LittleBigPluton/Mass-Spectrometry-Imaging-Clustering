@@ -4,13 +4,23 @@
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
-from processing import data_process
+from msi_clustering.processing import data_process
+from pathlib import Path
+from config import (
+    figs_dir,
+    figure_format,
+    dpi_resolution,
+    figure_size
+)
 import matplotlib.pyplot as plt
 import numpy as np
 ####################################
 ####  Define Clustering Class   ####
 ####################################
 class cluster(data_process):
+    def __init__(self, file_path):
+        super().__init__(file_path)
+        self.sample_name = Path(self.file_path).stem
 
     def apply_PCA(self, n_components=200):
         # Apply the PCA to get an idea how many features would be usefull to train unsupervised K-means ML algorithm
@@ -25,7 +35,7 @@ class cluster(data_process):
     def get_PCA_features(self, acceptance_rate):
         # Plot the cumulative explained variance by the components to help decide on the number of components to retain.
         # Set figure size
-        plt.figure(figsize=(10, 5))
+        plt.figure(figsize=figure_size)
         # Plot the explained variance ratio
         plt.plot(np.cumsum(self.explained_variance_ratio_))
         # Set axis and title
@@ -37,6 +47,9 @@ class cluster(data_process):
         # Set legend at the best location and draw grid lines
         plt.legend(loc='best')
         plt.grid(True)
+        # Set plot saving path and name
+        save_path = figs_dir / f"pca_plot_{self.sample_name}.{figure_format}"
+        plt.savefig(save_path, format=figure_format, dpi=dpi_resolution)
         plt.show()
         # Accoriding the graph, set the optimal n_components
         self.set_PCA_feature()
@@ -62,7 +75,7 @@ class cluster(data_process):
             wcss.append(kmeans.inertia_)
 
         # Set figure size
-        plt.figure(figsize=(10, 5))
+        plt.figure(figsize=figure_size)
         # Plot WCSS
         plt.plot(range(1, max_k + 1), wcss)
         # Set axis and title
@@ -71,6 +84,9 @@ class cluster(data_process):
         plt.ylabel('WCSS (Within-Cluster Sum of Squares)')
         # Draw grid lines
         plt.grid(True)
+        # Set plot saving path and name
+        save_path = figs_dir / f"elbow_plot_{self.sample_name}.{figure_format}"
+        plt.savefig(save_path, format=figure_format, dpi=dpi_resolution)
         plt.show()
         # Get number of clusters from the user
         self.get_cluster_numbers()

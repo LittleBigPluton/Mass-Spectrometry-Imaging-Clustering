@@ -2,17 +2,29 @@
 #####   Import Libraries  #####
 ###############################
 import matplotlib.pyplot as plt
-import numpy as np
-# Import data processing library in order to build on top
-from processing import data_process
 import matplotlib.patches as mpatches
-
+import numpy as np
+# To save figures with given file's name
+from pathlib import Path
+from config import (
+    figs_dir,
+    figure_format,
+    dpi_resolution,
+    figure_size,
+    heat_map_size,
+)
+# Import data processing library in order to build on top
+from msi_clustering.processing import data_process
 ####################################
 ##  Define Visualization Library  ##
 ####################################
 
 class visualize(data_process):
-    def save_plot(self,figure, value, type, directory = '.',format = 'png', dpi = 300):
+    def __init__(self, file_path=None, data=None):
+        super().__init__(file_path)
+        self.data = data
+
+    def save_plot(self,figure, value, type):
         ####################################################################################################
         # Parameters:                                                                                     ##
         # - figure: The matplotlib figure to save.                                                        ##
@@ -22,14 +34,14 @@ class visualize(data_process):
         # - dpi: The resolution in dots per inch. Defaults to 300 for high quality.                       ##
         ####################################################################################################
         # Extract sample name from the data file's path
-        sample_name = self.file_path[:-4]
-        save_path = str(f"{sample_name}_{value}_{type}.{format}")
+        sample_name = Path(self.file_path).stem
+        save_path = figs_dir / f"{sample_name}_{value}_{type}.{figure_format}"
 
         # Save the figure
-        figure.savefig(save_path, format=format, dpi=dpi)
+        figure.savefig(save_path, format=figure_format, dpi=dpi_resolution)
         print(f"Plot saved as '{save_path}'.")
 
-    def plot_heatmap(self, value, figure_size = (10,8), show = False, save = False):
+    def plot_heatmap(self, value, show = False, save = False):
         # To catch not defined value to plot
         if value not in self.data.columns:
             print(f"{value} is not defined in the data set.")
@@ -37,7 +49,7 @@ class visualize(data_process):
         # Create the pivot table to plot data as a heatmap
         pivot_table = self.data.pivot(index = "Y", columns = "X", values = value)
         # Create the intensity heatmap
-        fig, ax = plt.subplots(figsize=figure_size)
+        fig, ax = plt.subplots(figsize=heat_map_size)
         # Display the heatmap
         heatmap = ax.imshow(pivot_table,origin ='lower',cmap="CMRmap",interpolation='nearest')
         # Decide the label of the plot
