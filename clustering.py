@@ -98,7 +98,8 @@ class cluster(data_process):
         # Fit KMeans on the PCA-reduced data
         self.cluster_labels = self.kmeans.fit_predict(self.pca_result)
 
-        # Define a new column for claster labels
+        # Define a new column for cluster labels
+        self.data = self.data.copy()
         self.data['cluster_labels'] = self.cluster_labels
 
     def get_cluster_labels(self):

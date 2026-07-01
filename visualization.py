@@ -35,11 +35,11 @@ class visualize(data_process):
             print(f"{value} is not defined in the data set.")
             raise(ValueError)
         # Create the pivot table to plot data as a heatmap
-        pivot_table = self.data.pivot("Y", "X",value)
+        pivot_table = self.data.pivot(index = "Y", columns = "X", values = value)
         # Create the intensity heatmap
         fig, ax = plt.subplots(figsize=figure_size)
         # Display the heatmap
-        heatmap = ax.imshow(pivot_table,origin ='upper',cmap="CMRmap",interpolation='nearest')
+        heatmap = ax.imshow(pivot_table,origin ='lower',cmap="CMRmap",interpolation='nearest')
         # Decide the label of the plot
         if value != "cluster_labels":
             # Create the colorbar and set its label
