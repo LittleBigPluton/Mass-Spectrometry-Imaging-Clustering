@@ -7,6 +7,7 @@ import pandas as pd
 import io
 from msi_clustering.visualization import visualize
 from msi_clustering.clustering import cluster
+from msi_clustering.processing import data_process
 from config import (
     total_components,
     explained_variance_threshold,
@@ -14,9 +15,19 @@ from config import (
     n_clusters,
     random_state,
     raw_data_dir,
-    processed_data_dir
+    processed_data_dir,
+    minimum_clusters,
+    silhouette_sample_size,
+    stability_random_states,
+    reports_dir,
 )
-from msi_clustering.processing import data_process
+from msi_clustering.evaluation import (
+    evaluate_kmeans_candidates,
+    evaluate_kmeans_stability
+)
+
+reports_dir.mkdir(parents=True, exist_ok=True)
+
 #######################################
 ### The following cleaning process can
 ### be skipped if the data is in the
@@ -47,6 +58,19 @@ sample_data_1.get_PCA_features(explained_variance_threshold, show=False)
 print("Retained PCA components:", sample_data_1.pca_n_components)
 # Find the optimal number of clusters using the elbow method
 sample_data_1.find_optimal_clusters(max_k=maximum_clusters, random_state=random_state, show=False)
+# Evaluate candidate K-means cluster counts using clustering quality metrics
+evaluation_1 = evaluate_kmeans_candidates(sample_data_1.pca_result, min_clusters=minimum_clusters, max_clusters=maximum_clusters,
+                                          random_state=random_state, silhouette_sample_size=silhouette_sample_size)
+# Display clustering evaluation results
+print("\nSample 1 clustering evaluation:")
+print(evaluation_1.to_string(index=False))
+# Save clustering evaluation metrics to a CSV report
+evaluation_1.to_csv(reports_dir / "sample_1_clustering_metrics.csv", index=False)
+# Evaluate K-means clustering stability across different random initializations
+stability_1 = evaluate_kmeans_stability(sample_data_1.pca_result, n_clusters=n_clusters, random_states=stability_random_states)
+# Display clustering stability results for the selected number of clusters
+print(f"\nSample 1 \nk={n_clusters} stability:")
+print(stability_1)
 # Apply K-means
 sample_data_1.apply_kmeans(n_clusters=n_clusters, random_state=random_state)
 # To get cluster labels and centers
@@ -78,6 +102,19 @@ sample_data_2.get_PCA_features(explained_variance_threshold, show=False)
 print("Retained PCA components:", sample_data_2.pca_n_components)
 # Find the optimal number of clusters using the elbow method
 sample_data_2.find_optimal_clusters(max_k=maximum_clusters, random_state=random_state, show=False)
+# Evaluate candidate K-means cluster counts using clustering quality metrics
+evaluation_2 = evaluate_kmeans_candidates(sample_data_2.pca_result, min_clusters=minimum_clusters, max_clusters=maximum_clusters,
+                                          random_state=random_state, silhouette_sample_size=silhouette_sample_size)
+# Display clustering evaluation results
+print("\nSample 2 clustering evaluation:")
+print(evaluation_2.to_string(index=False))
+# Save clustering evaluation metrics to a CSV report
+evaluation_2.to_csv(reports_dir / "sample_2_clustering_metrics.csv", index=False)
+# Evaluate K-means clustering stability across different random initializations
+stability_2 = evaluate_kmeans_stability(sample_data_2.pca_result, n_clusters=n_clusters, random_states=stability_random_states)
+# Display clustering evaluation results
+print(f"\nSample 2 \nk={n_clusters} stability:")
+print(stability_2)
 # Apply K-means
 sample_data_2.apply_kmeans(n_clusters=n_clusters, random_state=random_state)
 # To get cluster labels and centers

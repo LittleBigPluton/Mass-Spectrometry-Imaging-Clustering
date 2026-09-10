@@ -17,6 +17,14 @@ n_clusters = 4
 maximum_clusters = 10
 random_state = 0
 
+# Clustering evaluation
+minimum_clusters = 2
+silhouette_sample_size = 5000
+stability_random_states = (0, 1, 2, 3, 4)
+
+# Reports folder
+reports_dir = project_root / "reports"
+
 # Figure folder
 figs_dir = project_root / "figures"
 
