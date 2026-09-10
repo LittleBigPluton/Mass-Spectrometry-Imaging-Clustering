@@ -96,7 +96,7 @@ class data_process:
         mz_values = list(raw_data.columns)
 
         # Extract numbers and prepare for MultiIndex
-        extracted_numbers = raw_data.index.str.extractall('(\d+)')[0].unstack()
+        extracted_numbers = raw_data.index.str.extractall(r"(\d+)")[0].unstack()
         extracted_numbers.columns = ['X', 'Y']
 
         # Convert to integers
@@ -143,7 +143,7 @@ class data_process:
             print(raw_data.head(10))
             print(f"Data includes {raw_data.shape[0]} rows and {raw_data.shape[1]} columns.")
             data_file = processed_data_dir / f"processed_{sample_file_name}"
-            raw_data.to_csv(data_file)
+            raw_data.to_csv(data_file, index=False)
             # Change file_path from raw to processed
             self.file_path = data_file
 
