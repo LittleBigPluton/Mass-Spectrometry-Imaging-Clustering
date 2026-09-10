@@ -72,3 +72,37 @@ class visualize(data_process):
             plt.show()
         if save:
             self.save_plot(fig, value, "heatmap")
+
+    def plot_cluster_comparison(self, labels_by_k, show=False, save=True):
+        """Plot spatial cluster maps for several k values."""
+        cluster_counts = sorted(labels_by_k.keys())
+        fig, axes = plt.subplots(1, len(cluster_counts), figsize=(6 * len(cluster_counts), 6), constrained_layout=True)
+        if len(cluster_counts) == 1:
+            axes = [axes]
+
+        for ax, n_clusters in zip(axes, cluster_counts):
+            comparison_data = (self.data.copy())
+            comparison_data["comparison_cluster_labels"] = labels_by_k[n_clusters]
+            pivot_table = (comparison_data.pivot(index="Y", columns="X", values=("comparison_cluster_labels")))
+            heatmap = ax.imshow(pivot_table, origin="lower", cmap="CMRmap", interpolation="nearest")
+            labels = sorted(comparison_data["comparison_cluster_labels"].unique())
+            colors = [heatmap.cmap(heatmap.norm(label)) for label in labels]
+            patches = [mpatches.Patch(color=colors[index], label=f"Cluster {label}") for index, label in enumerate(labels)]
+            ax.legend(handles=patches, title="Clusters", loc="best")
+            ax.set_title(f"k = {n_clusters}")
+            ax.set_xlabel("X coordinates on the plane")
+            ax.set_ylabel("Y coordinates on the plane")
+
+        fig.suptitle("Spatial K-means Cluster Comparison")
+        if save:
+            sample_name = Path(self.file_path).stem
+            comparison_dir = (figs_dir / "comparison")
+            comparison_dir.mkdir(parents=True, exist_ok=True)
+            save_path = (comparison_dir / (f"{sample_name}_cluster_comparison.{figure_format}"))
+            fig.savefig(save_path, format=figure_format, dpi=dpi_resolution, bbox_inches="tight")
+            print(f"Comparison plot saved as '{save_path}'.")
+
+        if show:
+            plt.show()
+
+        plt.close(fig)

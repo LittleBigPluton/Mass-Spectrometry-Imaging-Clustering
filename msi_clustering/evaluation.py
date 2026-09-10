@@ -41,3 +41,12 @@ def evaluate_kmeans_stability(features, n_clusters, random_states=(0, 1, 2, 3, 4
         ari_scores.append(adjusted_rand_score(labels_a, labels_b))
 
     return { "mean_ari": float(np.mean(ari_scores)), "min_ari": float(np.min(ari_scores)), "max_ari": float(np.max(ari_scores))}
+
+def generate_candidate_cluster_labels(features, cluster_counts=(2, 3, 4), random_state=0):
+    """Generate K-means labels for spatial comparison."""
+    labels_by_k = {}
+    for n_clusters in cluster_counts:
+        kmeans = KMeans(n_clusters=n_clusters, init="k-means++", max_iter=300, n_init=10, random_state=random_state)
+        labels_by_k[n_clusters] = (kmeans.fit_predict(features))
+
+    return labels_by_k
