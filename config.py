@@ -22,6 +22,9 @@ minimum_clusters = 2
 silhouette_sample_size = 5000
 stability_random_states = (0, 1, 2, 3, 4)
 
+# Spatial cluster comparison
+comparison_clusters = (2, 3, 4)
+
 # Reports folder
 reports_dir = project_root / "reports"
 
