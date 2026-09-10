@@ -55,11 +55,11 @@ sample_data_1.create_data_frame()
 #sample_data_1.normalize_by_TIC()
 # Apply PCA with a desired number of components
 sample_data_1.apply_PCA(n_components = total_components)
-# Apply spatial cluster comparison
-comparison_labels_1 = (generate_candidate_cluster_labels(sample_data_1.pca_result, cluster_counts=(comparison_clusters), random_state=random_state))
 # To visually determine the number of components to keep based on explained variance
 sample_data_1.get_PCA_features(explained_variance_threshold, show=False)
 print("Retained PCA components:", sample_data_1.pca_n_components)
+# Apply spatial cluster comparison
+comparison_labels_1 = (generate_candidate_cluster_labels(sample_data_1.pca_result, cluster_counts=(comparison_clusters), random_state=random_state))
 # To visualize spatial cluster comparison
 visual_instance_1 = visualize(file_path=sample_data_1.file_path, data=sample_data_1.data)
 visual_instance_1.plot_cluster_comparison(comparison_labels_1, show=False, save=True)
@@ -104,11 +104,11 @@ sample_data_2.create_data_frame()
 #data.normalize_by_TIC()
 # Apply PCA with a desired number of components
 sample_data_2.apply_PCA(n_components = total_components)
-# Apply spatial cluster comparison
-comparison_labels_2 = (generate_candidate_cluster_labels(sample_data_2.pca_result, cluster_counts=(comparison_clusters), random_state=random_state))
 # To visually determine the number of components to keep based on explained variance
 sample_data_2.get_PCA_features(explained_variance_threshold, show=False)
 print("Retained PCA components:", sample_data_2.pca_n_components)
+# Apply spatial cluster comparison
+comparison_labels_2 = (generate_candidate_cluster_labels(sample_data_2.pca_result, cluster_counts=(comparison_clusters), random_state=random_state))
 # To visualize spatial cluster comparison
 visual_instance_2 = visualize(file_path=sample_data_2.file_path, data=sample_data_2.data)
 visual_instance_2.plot_cluster_comparison(comparison_labels_2, show=False, save=True)
