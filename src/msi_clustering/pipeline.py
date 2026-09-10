@@ -36,7 +36,7 @@ from .evaluation import (
 ### 0.1 | 0.2 | 0.3     | 0.4     | ...
 ### ... | ... | ...     | ...     | ...
 ########################################
-def main():
+def main() -> None:
     # Make sure reports directory exist or create
     reports_dir.mkdir(parents=True, exist_ok=True)
 
