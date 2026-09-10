@@ -3,7 +3,6 @@
 ###############################
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
-import numpy as np
 from pathlib import Path
 
 from .config import (
@@ -14,7 +13,7 @@ from .config import (
     heat_map_size,
 )
 # Import data processing library in order to build on top
-from msi_clustering.processing import data_process
+from .processing import data_process
 ####################################
 ##  Define Visualization Library  ##
 ####################################
@@ -44,8 +43,7 @@ class visualize(data_process):
     def plot_heatmap(self, value, show = False, save = False):
         # To catch not defined value to plot
         if value not in self.data.columns:
-            print(f"{value} is not defined in the data set.")
-            raise(ValueError)
+            raise ValueError(f"{value!r} is not defined in the dataset.")
         # Create the pivot table to plot data as a heatmap
         pivot_table = self.data.pivot(index = "Y", columns = "X", values = value)
         # Create the intensity heatmap
@@ -72,6 +70,7 @@ class visualize(data_process):
             plt.show()
         if save:
             self.save_plot(fig, value, "heatmap")
+        plt.close(fig)
 
     def plot_cluster_comparison(self, labels_by_k, show=False, save=True):
         """Plot spatial cluster maps for several k values."""

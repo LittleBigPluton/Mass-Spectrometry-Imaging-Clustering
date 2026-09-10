@@ -4,8 +4,6 @@
 #######################################
 #####       Import Libraries      #####
 #######################################
-import pandas as pd
-import io
 
 from .visualization import visualize
 from .clustering import cluster
@@ -30,10 +28,6 @@ from .evaluation import (
     generate_candidate_cluster_labels
 )
 
-
-# Make sure reports directory exist or create
-reports_dir.mkdir(parents=True, exist_ok=True)
-
 #######################################
 ### The following cleaning process can
 ### be skipped if the data is in the
@@ -44,6 +38,9 @@ reports_dir.mkdir(parents=True, exist_ok=True)
 ### ... | ... | ...     | ...     | ...
 ########################################
 def main():
+    # Make sure reports directory exist or create
+    reports_dir.mkdir(parents=True, exist_ok=True)
+
     ########################################
     #####     Data Preprocessing       #####
     ########################################
@@ -91,7 +88,7 @@ def main():
     #sample_data_1.plot_clusters()
     # Call heatmap function form visualization library
     visual_instance_1 = visualize(file_path = sample_data_1.file_path, data = sample_data_1.data)
-    visual_instance_1.plot_heatmap("cluster_labels",show=True, save = True)
+    visual_instance_1.plot_heatmap("cluster_labels",show=False, save = True)
 
     ########################################
     #####     Data Preprocessing       #####
@@ -140,7 +137,7 @@ def main():
     #sample_data_2.plot_clusters()
     # Call heatmap function form visualization library
     visual_instance_2 = visualize(file_path = sample_data_2.file_path, data = sample_data_2.data)
-    visual_instance_2.plot_heatmap("cluster_labels",show=True, save = True)
+    visual_instance_2.plot_heatmap("cluster_labels",show=False, save = True)
 
 if __name__ == "__main__":
     main()

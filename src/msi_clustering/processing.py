@@ -38,10 +38,8 @@ class data_process:
             # Extract mz values from the column names
             self.mz_values = self.data.columns[4:]
 
-        except FileNotFoundError as e:
-            print("File not found. Please check the file path and try again.")
-            print(e)
-            exit()
+        except FileNotFoundError as exc:
+            raise FileNotFoundError(f"Data file not found: {self.file_path}") from exc
 
     def get_unique_coordinates(self):
         # Get unique values of XY coordinates
@@ -68,8 +66,8 @@ class data_process:
         try:
             self.data.drop(drop_columns, axis=1, inplace=True)
             print(f"Columns {drop_columns} were deleted from the DataFrame")
-        except KeyError as e:
-            print(f"Error removing columns: {e}")
+        except KeyError as exc:
+            raise KeyError(f"Could not remove columns {drop_columns}: {exc}") from exc
 
     def normalize_by_TIC(self, all = True):
         # Calculate Total Ion Current (TIC) for normalization
@@ -148,7 +146,5 @@ class data_process:
             self.file_path = data_file
 
 
-        except FileNotFoundError as e:
-            print("File not found. Please check the file path and try again.")
-            print(e)
-            exit()
+        except FileNotFoundError as exc:
+            raise FileNotFoundError(f"Data file not found: {self.file_path}") from exc

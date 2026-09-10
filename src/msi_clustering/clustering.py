@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
 
-from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
 from .processing import data_process
@@ -56,16 +55,6 @@ class cluster(data_process):
             plt.show()
         plt.close()
         self.apply_PCA(n_components=self.pca_n_components)
-
-    def set_PCA_feature(self):
-        while True:
-            try:
-                # Get n_components from the user
-                self.pca_n_components = int(input("Please enter the PCA feature numbers: "))
-                # Exit the loop if input is successfully converted to an integer
-                break
-            except ValueError:
-                print("Entered invalid type for the PCA features. Please enter an integer.")
 
 
     def find_optimal_clusters(self, max_k=10, random_state=0, show=False):
