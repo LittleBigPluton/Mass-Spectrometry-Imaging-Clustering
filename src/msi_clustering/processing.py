@@ -8,7 +8,7 @@ import io
 ###################################
 
 
-class data_process:
+class DataProcessor:
 
     def __init__(self, file_path):
         ########################################################################
@@ -16,8 +16,8 @@ class data_process:
         # - file_path: Data file's name or complete path to read and use data ##
         # - data: Pandas DataFrame to manipulate easily                       ##
         # - column_names: To extract column names from the file               ##
-        # - Xunique: To create a meshgrid for colormesh, unique x values      ##
-        # - Yunique: To create a meshgrid for colormesh, unique y values      ##
+        # - xunique: To create a meshgrid for colormesh, unique x values      ##
+        # - yunique: To create a meshgrid for colormesh, unique y values      ##
         # - Molecule: Desired m/z value to visualize                          ##
         ########################################################################
 
@@ -25,11 +25,11 @@ class data_process:
         self.file_path = file_path
         self.data = None
         self.mz_values = None
-        self.Xunique = None
-        self.Yunique = None
+        self.xunique = None
+        self.yunique = None
         self.molecule = None
 
-    def create_data_frame(self):
+    def create_dataframe(self):
         try:
             # Read the cleaned data file from the given file path
             self.data = pd.read_csv(self.file_path)
@@ -43,15 +43,15 @@ class data_process:
 
     def get_unique_coordinates(self):
         # Get unique values of XY coordinates
-        self.Xunique = self.data['X'].unique()
-        self.Yunique = self.data['Y'].unique()
+        self.xunique = self.data['X'].unique()
+        self.yunique = self.data['Y'].unique()
 
     def get_column_names(self):
         # Get whole column names of the file
         print(self.data.columns)
         return self.data.columns
 
-    def get_DataFrame(self):
+    def get_dataframe(self):
         # TO get data as data frame
         return self.data
 
@@ -69,7 +69,7 @@ class data_process:
         except KeyError as exc:
             raise KeyError(f"Could not remove columns {drop_columns}: {exc}") from exc
 
-    def normalize_by_TIC(self, all = True):
+    def normalize_by_tic(self, all = True):
         # Calculate Total Ion Current (TIC) for normalization
         # Create a new column names as TIC and store whole total intensities by coordinates
         self.data["TIC"] = self.data[self.mz_values].sum(axis=1)

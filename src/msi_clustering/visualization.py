@@ -6,35 +6,27 @@ import matplotlib.patches as mpatches
 from pathlib import Path
 
 from .config import (
-    figs_dir,
+    figures_dir,
     figure_format,
     dpi_resolution,
     figure_size,
-    heat_map_size,
+    heatmap_size
 )
 # Import data processing library in order to build on top
-from .processing import data_process
+from .processing import DataProcessor
 ####################################
 ##  Define Visualization Library  ##
 ####################################
 
-class visualize(data_process):
+class MSIVisualizer(DataProcessor):
     def __init__(self, file_path=None, data=None):
         super().__init__(file_path)
         self.data = data
 
-    def save_plot(self,figure, value, type):
-        ####################################################################################################
-        # Parameters:                                                                                     ##
-        # - figure: The matplotlib figure to save.                                                        ##
-        # - savepath: Name of the file to save the figure as.                                             ##
-        # - directory: The directory where the figure should be saved. Defaults to the current directory. ##
-        # - format: The file format (e.g., 'png', 'jpg', 'pdf', 'svg'). Defaults to 'png'.                ##
-        # - dpi: The resolution in dots per inch. Defaults to 300 for high quality.                       ##
-        ####################################################################################################
+    def save_plot(self,figure, value, plot_type):
         # Extract sample name from the data file's path
         sample_name = Path(self.file_path).stem
-        save_path = figs_dir / f"{sample_name}_{value}_{type}.{figure_format}"
+        save_path = figures_dir / f"{sample_name}_{value}_{plot_type}.{figure_format}"
 
         # Save the figure
         figure.savefig(save_path, format=figure_format, dpi=dpi_resolution)
@@ -47,7 +39,7 @@ class visualize(data_process):
         # Create the pivot table to plot data as a heatmap
         pivot_table = self.data.pivot(index = "Y", columns = "X", values = value)
         # Create the intensity heatmap
-        fig, ax = plt.subplots(figsize=heat_map_size)
+        fig, ax = plt.subplots(figsize=heatmap_size)
         # Display the heatmap
         heatmap = ax.imshow(pivot_table,origin ='lower',cmap="CMRmap",interpolation='nearest')
         # Decide the label of the plot
@@ -95,7 +87,7 @@ class visualize(data_process):
         fig.suptitle("Spatial K-means Cluster Comparison")
         if save:
             sample_name = Path(self.file_path).stem
-            comparison_dir = (figs_dir / "comparison")
+            comparison_dir = (figures_dir / "comparison")
             comparison_dir.mkdir(parents=True, exist_ok=True)
             save_path = (comparison_dir / (f"{sample_name}_cluster_comparison.{figure_format}"))
             fig.savefig(save_path, format=figure_format, dpi=dpi_resolution, bbox_inches="tight")
