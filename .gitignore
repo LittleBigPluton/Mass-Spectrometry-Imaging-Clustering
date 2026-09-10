@@ -1,5 +1,7 @@
 # Ignore all python cache files
 __pycache__/
 *.pyc
+*.egg-info/
+
 # Ignore virtual environment
 venv_k_means_clustering/

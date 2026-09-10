@@ -4,9 +4,9 @@
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import numpy as np
-# To save figures with given file's name
 from pathlib import Path
-from config import (
+
+from .config import (
     figs_dir,
     figure_format,
     dpi_resolution,

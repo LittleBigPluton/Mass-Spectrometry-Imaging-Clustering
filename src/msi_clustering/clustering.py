@@ -1,19 +1,22 @@
 ####################################
 ######  Clustering Libraries  ######
 ####################################
+import matplotlib.pyplot as plt
+import numpy as np
+from pathlib import Path
+
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
-from msi_clustering.processing import data_process
-from pathlib import Path
-from config import (
+from .processing import data_process
+from .config import (
     figs_dir,
     figure_format,
     dpi_resolution,
     figure_size
 )
-import matplotlib.pyplot as plt
-import numpy as np
+
+
 ####################################
 ####  Define Clustering Class   ####
 ####################################

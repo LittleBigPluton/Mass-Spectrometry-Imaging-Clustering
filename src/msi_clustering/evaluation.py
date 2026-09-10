@@ -1,7 +1,6 @@
-from itertools import combinations
-
 import numpy as np
 import pandas as pd
+from itertools import combinations
 
 from sklearn.cluster import KMeans
 from sklearn.metrics import (

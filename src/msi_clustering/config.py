@@ -1,12 +1,13 @@
 from pathlib import Path
 
 # Root project folder
-project_root = Path(__file__).resolve().parent
+project_root = Path(__file__).resolve().parents[2]
 
 # Data folders
-data_dir = project_root / "data"
-raw_data_dir = data_dir / "raw"
-processed_data_dir = data_dir / "processed"
+raw_data_dir = project_root / "data" / "raw"
+processed_data_dir = project_root / "data" / "processed"
+figs_dir = project_root / "figures"
+reports_dir = project_root / "reports"
 
 # PCA configuration
 total_components = 96
@@ -24,12 +25,6 @@ stability_random_states = (0, 1, 2, 3, 4)
 
 # Spatial cluster comparison
 comparison_clusters = (2, 3, 4)
-
-# Reports folder
-reports_dir = project_root / "reports"
-
-# Figure folder
-figs_dir = project_root / "figures"
 
 # Figure parameters
 figure_format = "png"
