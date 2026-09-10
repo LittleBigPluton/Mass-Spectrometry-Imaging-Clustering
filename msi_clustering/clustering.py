@@ -32,29 +32,27 @@ class cluster(data_process):
         self.explained_variance_ratio_ = pca.explained_variance_ratio_
         print(f"Explained variance ratio: {self.explained_variance_ratio_}")
 
-    def get_PCA_features(self, acceptance_rate):
-        # Plot the cumulative explained variance by the components to help decide on the number of components to retain.
-        # Set figure size
+    def get_PCA_features(self, acceptance_rate, show=False):
+        cumulative_variance = np.cumsum(self.explained_variance_ratio_)
+        threshold = acceptance_rate / 100.0
+        self.pca_n_components = (int(np.searchsorted(cumulative_variance, threshold)) + 1)
+
         plt.figure(figsize=figure_size)
-        # Plot the explained variance ratio
-        plt.plot(np.cumsum(self.explained_variance_ratio_))
-        # Set axis and title
-        plt.xlabel('Number of Components')
-        plt.ylabel('Cumulative Explained Variance')
-        plt.title('Explained Variance by Components')
-        # Draw a line at the acceptance rate
-        plt.axhline(y=acceptance_rate*0.01, color='r', linestyle='--', label=f'{acceptance_rate}% explained variance')
-        # Set legend at the best location and draw grid lines
-        plt.legend(loc='best')
+        plt.plot(range(1, len(cumulative_variance) + 1), cumulative_variance)
+        plt.axhline(y=threshold, color="r", linestyle="--", label=f"{acceptance_rate}% explained variance")
+        plt.axvline(x=self.pca_n_components, color="k", linestyle=":", label=(f"{self.pca_n_components} components"))
+        plt.xlabel("Number of Components")
+        plt.ylabel("Cumulative Explained Variance")
+        plt.title("Explained Variance by PCA Components")
+        plt.legend(loc="best")
         plt.grid(True)
-        # Set plot saving path and name
-        save_path = figs_dir / f"pca_plot_{self.sample_name}.{figure_format}"
-        plt.savefig(save_path, format=figure_format, dpi=dpi_resolution)
-        plt.show()
-        # Accoriding the graph, set the optimal n_components
-        self.set_PCA_feature()
-        # Apply PCA with optimal n_components
-        self.apply_PCA(self.pca_n_components)
+
+        save_path = (figs_dir / (f"pca_plot_{self.sample_name}.{figure_format}"))
+        plt.savefig(save_path, format=figure_format, dpi=dpi_resolution, bbox_inches="tight")
+        if show:
+            plt.show()
+        plt.close()
+        self.apply_PCA(n_components=self.pca_n_components)
 
     def set_PCA_feature(self):
         while True:
@@ -67,49 +65,41 @@ class cluster(data_process):
                 print("Entered invalid type for the PCA features. Please enter an integer.")
 
 
-    def find_optimal_clusters(self, max_k=10):
-        wcss = []  # Within-cluster sum of squares
-        for i in range(1, max_k + 1):
-            kmeans = KMeans(n_clusters=i, init='k-means++', max_iter=300, n_init=10, random_state=0)
+    def find_optimal_clusters(self, max_k=10, random_state=0, show=False):
+        wcss = []
+        cluster_range = range(1, max_k + 1)
+        for n_clusters in cluster_range:
+            kmeans = KMeans(n_clusters=n_clusters, init="k-means++", max_iter=300, n_init=10, random_state=random_state)
             kmeans.fit(self.pca_result)
             wcss.append(kmeans.inertia_)
 
-        # Set figure size
         plt.figure(figsize=figure_size)
-        # Plot WCSS
-        plt.plot(range(1, max_k + 1), wcss)
-        # Set axis and title
-        plt.title('Elbow Method for Optimal K')
-        plt.xlabel('Number of clusters')
-        plt.ylabel('WCSS (Within-Cluster Sum of Squares)')
-        # Draw grid lines
+        plt.plot(cluster_range, wcss, marker="o")
+        plt.title("Elbow Method for K-means")
+        plt.xlabel("Number of Clusters")
+        plt.ylabel("Within-Cluster Sum of Squares")
         plt.grid(True)
-        # Set plot saving path and name
-        save_path = figs_dir / f"elbow_plot_{self.sample_name}.{figure_format}"
-        plt.savefig(save_path, format=figure_format, dpi=dpi_resolution)
-        plt.show()
-        # Get number of clusters from the user
-        self.get_cluster_numbers()
+
+        save_path = (figs_dir / (f"elbow_plot_{self.sample_name}.{figure_format}"))
+        plt.savefig(save_path, format=figure_format, dpi=dpi_resolution, bbox_inches="tight")
+        if show:
+            plt.show()
+
         plt.close()
-
-    def get_cluster_numbers(self):
-        while True:
-            try:
-                self.n_clusters = int(input("Please enter the cluster number: "))
-                # Exit the loop if input is successfully converted to an integer
-                break
-            except ValueError:
-                print("Entered invalid type for the cluster numbers. Please enter an integer.")
+        return wcss
 
 
-    def apply_kmeans(self):
-    	##############################################################################
+    def apply_kmeans(self, n_clusters, random_state=0):
+        ##############################################################################
         # Apply K-means clustering on the PCA-reduced data.			                ##
-	    # Parameters:								                                ##
+    	   # Parameters:								                                ##
         # - n_clusters: Optimal number of clusters determined from the elbow method.##
         ##############################################################################
+        # Initialize number of the clusters
+        self.n_clusters = n_clusters
+
         # Initialize KMeans with the optimal number of clusters
-        self.kmeans = KMeans(n_clusters=self.n_clusters, init='k-means++', max_iter=300, n_init=10, random_state=0)
+        self.kmeans = KMeans(n_clusters=self.n_clusters, init='k-means++', max_iter=300, n_init=10, random_state=random_state)
 
         # Fit KMeans on the PCA-reduced data
         self.cluster_labels = self.kmeans.fit_predict(self.pca_result)
