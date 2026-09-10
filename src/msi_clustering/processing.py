@@ -16,8 +16,8 @@ class DataProcessor:
         # - file_path: Data file's name or complete path to read and use data ##
         # - data: Pandas DataFrame to manipulate easily                       ##
         # - column_names: To extract column names from the file               ##
-        # - xunique: To create a meshgrid for colormesh, unique x values      ##
-        # - yunique: To create a meshgrid for colormesh, unique y values      ##
+        # - x_unique: To create a meshgrid for colormesh, unique x values      ##
+        # - y_unique: To create a meshgrid for colormesh, unique y values      ##
         # - Molecule: Desired m/z value to visualize                          ##
         ########################################################################
 
@@ -25,8 +25,8 @@ class DataProcessor:
         self.file_path = file_path
         self.data = None
         self.mz_values = None
-        self.xunique = None
-        self.yunique = None
+        self.x_unique = None
+        self.y_unique = None
         self.molecule = None
 
     def create_dataframe(self):
@@ -43,8 +43,8 @@ class DataProcessor:
 
     def get_unique_coordinates(self):
         # Get unique values of XY coordinates
-        self.xunique = self.data['X'].unique()
-        self.yunique = self.data['Y'].unique()
+        self.x_unique = self.data['X'].unique()
+        self.y_unique = self.data['Y'].unique()
 
     def get_column_names(self):
         # Get whole column names of the file
