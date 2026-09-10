@@ -7,9 +7,9 @@ from pathlib import Path
 
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
-from .processing import data_process
+from .processing import DataProcessor
 from .config import (
-    figs_dir,
+    figures_dir,
     figure_format,
     dpi_resolution,
     figure_size
@@ -19,12 +19,12 @@ from .config import (
 ####################################
 ####  Define Clustering Class   ####
 ####################################
-class cluster(data_process):
+class MSIClusterer(DataProcessor):
     def __init__(self, file_path):
         super().__init__(file_path)
         self.sample_name = Path(self.file_path).stem
 
-    def apply_PCA(self, n_components=200):
+    def apply_pca(self, n_components=200):
         # Apply the PCA to get an idea how many features would be usefull to train unsupervised K-means ML algorithm
         # Extract relevant data excluding 'Index', 'X', 'Y'
         features = self.data[self.mz_values]
@@ -34,7 +34,7 @@ class cluster(data_process):
         self.explained_variance_ratio_ = pca.explained_variance_ratio_
         print(f"Explained variance ratio: {self.explained_variance_ratio_}")
 
-    def get_PCA_features(self, acceptance_rate, show=False):
+    def select_pca_components(self, acceptance_rate, show=False):
         cumulative_variance = np.cumsum(self.explained_variance_ratio_)
         threshold = acceptance_rate / 100.0
         self.pca_n_components = (int(np.searchsorted(cumulative_variance, threshold)) + 1)
@@ -49,15 +49,15 @@ class cluster(data_process):
         plt.legend(loc="best")
         plt.grid(True)
 
-        save_path = (figs_dir / (f"pca_plot_{self.sample_name}.{figure_format}"))
+        save_path = (figures_dir / (f"pca_plot_{self.sample_name}.{figure_format}"))
         plt.savefig(save_path, format=figure_format, dpi=dpi_resolution, bbox_inches="tight")
         if show:
             plt.show()
         plt.close()
-        self.apply_PCA(n_components=self.pca_n_components)
+        self.apply_pca(n_components=self.pca_n_components)
 
 
-    def find_optimal_clusters(self, max_k=10, random_state=0, show=False):
+    def plot_elbow_curve(self, max_k=10, random_state=0, show=False):
         wcss = []
         cluster_range = range(1, max_k + 1)
         for n_clusters in cluster_range:
@@ -72,7 +72,7 @@ class cluster(data_process):
         plt.ylabel("Within-Cluster Sum of Squares")
         plt.grid(True)
 
-        save_path = (figs_dir / (f"elbow_plot_{self.sample_name}.{figure_format}"))
+        save_path = (figures_dir / (f"elbow_plot_{self.sample_name}.{figure_format}"))
         plt.savefig(save_path, format=figure_format, dpi=dpi_resolution, bbox_inches="tight")
         if show:
             plt.show()

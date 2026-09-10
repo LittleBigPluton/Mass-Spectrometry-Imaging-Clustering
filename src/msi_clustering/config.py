@@ -6,7 +6,7 @@ project_root = Path(__file__).resolve().parents[2]
 # Data folders
 raw_data_dir = project_root / "data" / "raw"
 processed_data_dir = project_root / "data" / "processed"
-figs_dir = project_root / "figures"
+figures_dir = project_root / "figures"
 reports_dir = project_root / "reports"
 
 # PCA configuration
@@ -30,4 +30,4 @@ comparison_clusters = (2, 3, 4)
 figure_format = "png"
 dpi_resolution = 300
 figure_size = (10,5)
-heat_map_size = (10,8)
+heatmap_size = (10,8)
