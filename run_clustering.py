@@ -11,6 +11,8 @@ from config import (
     total_components,
     explained_variance_threshold,
     maximum_clusters,
+    n_clusters,
+    random_state,
     raw_data_dir,
     processed_data_dir
 )
@@ -41,11 +43,12 @@ sample_data_1.create_data_frame()
 # Apply PCA with a desired number of components
 sample_data_1.apply_PCA(n_components = total_components)
 # To visually determine the number of components to keep based on explained variance
-sample_data_1.get_PCA_features(explained_variance_threshold)
+sample_data_1.get_PCA_features(explained_variance_threshold, show=False)
+print("Retained PCA components:", sample_data_1.pca_n_components)
 # Find the optimal number of clusters using the elbow method
-sample_data_1.find_optimal_clusters(max_k=maximum_clusters)
+sample_data_1.find_optimal_clusters(max_k=maximum_clusters, random_state=random_state, show=False)
 # Apply K-means
-sample_data_1.apply_kmeans()
+sample_data_1.apply_kmeans(n_clusters=n_clusters, random_state=random_state)
 # To get cluster labels and centers
 #print(sample_data_1.get_cluster_labels())
 #print(sample_data_1.get_cluster_centers())
@@ -71,11 +74,12 @@ sample_data_2.create_data_frame()
 # Apply PCA with a desired number of components
 sample_data_2.apply_PCA(n_components = total_components)
 # To visually determine the number of components to keep based on explained variance
-sample_data_2.get_PCA_features(explained_variance_threshold)
+sample_data_2.get_PCA_features(explained_variance_threshold, show=False)
+print("Retained PCA components:", sample_data_2.pca_n_components)
 # Find the optimal number of clusters using the elbow method
-sample_data_2.find_optimal_clusters(max_k=maximum_clusters)
+sample_data_2.find_optimal_clusters(max_k=maximum_clusters, random_state=random_state, show=False)
 # Apply K-means
-sample_data_2.apply_kmeans()
+sample_data_2.apply_kmeans(n_clusters=n_clusters, random_state=random_state)
 # To get cluster labels and centers
 #print(sample_data_2.get_cluster_labels())
 #print(sample_data_2.get_cluster_centers())
