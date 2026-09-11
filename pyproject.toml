@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "desi-msi-clustering"
-version = "0.1.0"
+version = "1.0.0"
 description = "Unsupervised spatial segmentation of DESI-MSI data using PCA and K-means clustering."
 readme = "README.md"
 requires-python = ">=3.12"
