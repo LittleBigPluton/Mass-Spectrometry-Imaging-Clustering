@@ -6,13 +6,12 @@ from msi_clustering.processing import DataProcessor
 
 
 def test_create_dataframe(tmp_path):
-    data = pd.DataFrame({"Index": [0, 1, 2], "X": [0, 1, 2], "Y": [0, 0, 0], "metadata": ["a", "b", "c"], "100.0": [10.0, 20.0, 30.0], "200.0": [5.0, 10.0, 15.0]})
+    data = pd.DataFrame({"X": [0, 1], "Y": [0, 1], "100.0": [10.0, 20.0], "200.0": [30.0, 40.0], "300.0": [50.0, 60.0]})
     file_path = tmp_path / "sample.csv"
     data.to_csv(file_path, index=False)
     processor = DataProcessor(file_path)
     processor.create_dataframe()
-    assert processor.data.shape == (3, 6)
-    assert list(processor.mz_values) == ["100.0", "200.0"]
+    assert list(processor.mz_values) == ["100.0", "200.0", "300.0"]
 
 
 def test_create_dataframe_missing_file(tmp_path):

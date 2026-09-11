@@ -53,7 +53,7 @@ class DataProcessor:
             print(self.data.head())
             print(self.data.shape)
             # Extract mz values from the column names
-            self.mz_values = self.data.columns[4:]
+            self.mz_values = self.data.columns[2:]
 
         except FileNotFoundError as exc:
             raise FileNotFoundError(f"Data file not found: {self.file_path}") from exc
@@ -166,6 +166,7 @@ class DataProcessor:
             print(raw_data.head(10))
             print(f"Data includes {raw_data.shape[0]} rows and {raw_data.shape[1]} columns.")
             data_file = processed_data_dir / f"processed_{sample_file_name}"
+            raw_data = raw_data.drop(['Index',*list(raw_data.columns[-2:])], axis=1)
             raw_data.to_csv(data_file, index=False)
             # Change file_path from raw to processed
             self.file_path = data_file
