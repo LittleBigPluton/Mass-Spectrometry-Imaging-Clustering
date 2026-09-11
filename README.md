@@ -1,470 +1,508 @@
-# Mass Spectrometry Imaging Clustering
+# DESI-MSI Clustering
 
-DESI-MSI tissue region detection using PCA and K-means clustering.
+[![CI](https://github.com/LittleBigPluton/desi-msi-clustering/actions/workflows/ci.yml/badge.svg)](https://github.com/LittleBigPluton/desi-msi-clustering/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/Python-3.12%20%7C%203.13-blue)
+![License](https://img.shields.io/badge/License-MIT-green)
 
-This repository contains preprocessing mass spectrometry imaging data, reducing high-dimensional molecular intensity features with Principal Component Analysis (PCA), and detecting tissue-related spatial regions using K-means clustering. The project also includes visualization tools for plotting cluster maps and molecular intensity heatmaps from spatial MSI coordinates.
+Unsupervised spatial segmentation of DESI mass spectrometry imaging data using PCA and K-means clustering, with quantitative cluster evaluation and stability analysis.
 
-## Overview
+The project converts high-dimensional MSI measurements into spatial cluster maps without relying on manually annotated tissue labels. It includes format-specific preprocessing, adaptive PCA dimensionality reduction, deterministic K-means clustering, internal validation metrics, cross-seed stability analysis and spatial comparison of candidate cluster resolutions.
 
-Mass spectrometry imaging (MSI) produces spatially resolved molecular measurements. Each pixel or coordinate position contains many molecular intensity values, which makes the dataset high-dimensional and difficult to inspect directly.
+---
 
-This project applies an unsupervised learning workflow to:
+## Results at a Glance
 
-1. Load DESI-MSI style tabular data.
-2. Clean and reshape raw exported files into a structured format.
-3. Apply PCA for dimensionality reduction.
-4. Estimate a suitable number of K-means clusters using the elbow method.
-5. Assign cluster labels to spatial coordinates.
-6. Visualize the resulting tissue regions as heatmaps.
+The pipeline was evaluated on two DESI-MSI datasets with substantially different dimensionalities and raw export structures.
 
-The main goal is to identify spatial patterns in DESI-MSI data without using manually annotated tissue labels.
+| Dataset | Spatial observations | Molecular features | PCA components retained | Selected k | Silhouette | Davies-Bouldin | Mean ARI stability |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Sample 1 | 15,748 | 98 | 17 | 4 | 0.706 | 0.815 | 0.998 |
+| Sample 2 | 750 | 3,000 | 5 | 4 | 0.654 | 0.733 | 0.999 |
 
-## Table of Contents
-1. [Overview](#project-overview)
-2. [Main Features](#main-features)
-3. [Repository Structure](#repository-structure)
-4. [Workflow](#workflow)
-5. [Expected Data Format](#expected-data-format)
-6. [Installation](#installation)
-7. [Optional System Dependency for Interactive Plots](#optional-system-dependency-for-interactive-plots)
-8. [Configuration](#configuration)
-9. [Usage](#usage)
-10. [Data Preprocessing](#data-preprocessing)
-11. [PCA Dimensionality Reduction](#pca-dimensionality-reduction-12)
-12. [K-means Clustering](#k-means-clustering-34)
-13. [Elbow Method](#elbow-method-56)
-14. [Visualization](#visualization)
-15. [Outputs](#outputs)
-16. [Notes on Git Tracking](#notes-on-git-tracking)
-17. [Troubleshooting](#troubleshooting)
-18. [Future Improvements](#future-improvements)
-19. [Technologies Used](#technologies-used)
-20. [License](#license)
-21. [Author](#author)
-22. [References](#References)
-    
-## Main Features
+PCA components are selected automatically to retain at least **99% cumulative explained variance**.
 
-* Preprocessing support for different MSI export formats.
-* Data loading into a structured pandas DataFrame.
-* PCA-based dimensionality reduction.
-* Cumulative explained variance analysis.
-* K-means clustering for tissue region detection.
-* Elbow method for selecting cluster count.
-* Cluster label extraction and cluster center inspection.
-* Spatial heatmap visualization from X/Y coordinates.
-* Output saving for processed data and generated figures.
-* Package-style project organization with reusable modules.
+The final `k=4` solutions are highly reproducible across random initializations, with mean Adjusted Rand Index values of approximately **0.998** for Sample 1 and **0.999** for Sample 2.
 
-## Repository Structure
+### Spatial resolution comparison
+
+#### Sample 1
+
+![Sample 1 spatial cluster comparison](figures/comparison/processed_20191017_liver_4v_75um_Analyte_1AFAMM_1_pixel_intensities_cluster_comparison.png)
+
+#### Sample 2
+
+![Sample 2 spatial cluster comparison](figures/comparison/processed_Sample_PL_cluster_comparison.png)
+
+The comparison illustrates how increasing the number of clusters from `k=2` to `k=4` progressively resolves additional spatially coherent spectral regions rather than merely fragmenting the samples into arbitrary labels.
+
+> **Interpretation:** Cluster labels represent unsupervised spectral/spatial partitions. Without external histological ground truth, they should not be interpreted as validated biological tissue classes.
+
+---
+
+## Why `k = 4`?
+
+The number of clusters is treated as an **exploratory segmentation resolution**, not as a known biological class count.
+
+No single internal clustering metric identifies `k=4` as the universal mathematical optimum. In fact, the internal metrics generally favor coarser partitions.
+
+For Sample 1:
+
+- `k=2` gives the highest silhouette score and Calinski-Harabasz score and the lowest Davies-Bouldin index.
+- `k=3` introduces additional structure but remains a relatively coarse segmentation.
+- `k=4` provides a finer spatial partition while maintaining strong cluster separation and extremely high cross-seed stability.
+
+For Sample 2:
+
+- `k=2` gives the strongest silhouette and Davies-Bouldin scores.
+- `k=3` gives the highest Calinski-Harabasz score.
+- `k=4` remains well separated and highly stable while resolving additional spatially coherent regions.
+
+The elbow curves provide another part of the evidence.
+
+![Sample 1 elbow plot](figures/elbow_plot_20191017_liver_4v_75um_Analyte_1AFAMM_1_pixel_intensities.png)
+
+![Sample 2 elbow plot](figures/elbow_plot_Sample_PL.png)
+
+The strongest inertia reduction occurs at low values of `k`, as expected. Across the meaningful multi-cluster range (`k=2–10`), however, the reduction in inertia begins to show diminishing returns around `k=4`.
+
+The spatial comparison is therefore an important part of the decision. In both datasets:
+
+- `k=2` primarily captures a coarse large-scale partition;
+- `k=3` begins to resolve additional internal structure;
+- `k=4` preserves the broad spatial organization while separating further spatially coherent spectral regions.
+
+The selected `k=4` solutions are also extremely reproducible across random initializations:
 
 ```text
-Mass-Spectrometry-Imaging-Clustering/
-│
-├── README.md
-├── LICENSE
-├── requirements.txt
-├── config.py
-├── run_clustering.py
-│
-├── data/
-│   ├── raw/
-│   │   └── example raw MSI data files
-│   └── processed/
-│       └── processed MSI data files
-│
-├── figs/
-│   └── generated plots and heatmaps
-│
-└── msi_clustering/
-    ├── __init__.py
-    ├── processing.py
-    ├── clustering.py
-    └── visualization.py
+Sample 1
+mean ARI: 0.9983
+min ARI:  0.9967
+max ARI:  1.0000
+
+Sample 2
+mean ARI: 0.9986
+min ARI:  0.9972
+max ARI:  1.0000
 ```
 
-### Main files
+These stability values indicate that the additional subdivision at `k=4` is not simply a consequence of unstable K-means initialization.
 
-| File                | Purpose                                                                     |
-| ------------------- | --------------------------------------------------------------------------- |
-| `run_clustering.py` | Main script for running the full clustering workflow                        |
-| `config.py`         | Central location for project paths and analysis parameters                  |
-| `processing.py`     | Data loading, cleaning, preprocessing and normalization methods            |
-| `clustering.py`     | PCA, explained variance analysis, K-means clustering and cluster utilities |
-| `visualization.py`  | Heatmap and cluster visualization functions                                 |
-| `requirements.txt`  | Python package dependencies                                                 |
+For this reason, **four clusters are retained as the working exploratory segmentation resolution**. The choice balances:
+
+- inertia reduction;
+- internal cluster quality;
+- spatial coherence;
+- additional segmentation detail;
+- and cross-seed reproducibility.
+
+It should therefore be interpreted as a **defensible exploratory resolution**, not as proof that the samples contain exactly four biological tissue classes.
+
+---
 
 ## Workflow
 
-The general workflow is:
-
 ```text
-Raw MSI file
-   ↓
-Data cleaning / preprocessing
-   ↓
-Structured DataFrame with X, Y and molecular intensity columns
-   ↓
-PCA dimensionality reduction
-   ↓
-Explained variance inspection
-   ↓
-K-means clustering
-   ↓
-Cluster labels added to DataFrame
-   ↓
-Spatial heatmap / cluster map visualization
+Raw DESI-MSI data
+        │
+        ▼
+Format-specific preprocessing
+        │
+        ▼
+Canonical spatial feature matrix
+(X, Y, molecular intensities)
+        │
+        ▼
+Initial PCA decomposition
+        │
+        ▼
+Automatic component selection
+≥ 99% cumulative explained variance
+        │
+        ▼
+Reduced PCA feature space
+        │
+        ├───────────────┐
+        ▼               ▼
+Elbow analysis      Candidate k evaluation
+                    Silhouette
+                    Davies-Bouldin
+                    Calinski-Harabasz
+        │               │
+        └───────┬───────┘
+                ▼
+        K-means clustering
+                │
+                ▼
+      Cross-seed ARI stability
+                │
+                ▼
+       Spatial cluster maps
 ```
 
-## Expected Data Format
+The pipeline uses a fixed random state for reproducibility and evaluates clustering stability across multiple random initializations.
 
-After preprocessing, the data should have a tabular structure similar to:
+---
+
+## Format-Specific Preprocessing
+
+The two datasets do not share the same raw export structure, so they require different cleaning procedures before they can be analyzed through the same clustering pipeline.
+
+The preprocessing layer therefore preserves two dedicated cleaning paths.
 
 ```text
-X     Y     123.456     255.233     ...
-0.1   0.1   0.9         0.3         ...
-0.1   0.2   0.3         0.4         ...
-...   ...   ...         ...         ...
+Raw format A
+    │
+    └── format-specific cleaning ──┐
+                                   │
+                                   ▼
+                         X, Y, molecular features
+                                   ▲
+                                   │
+Raw format B                       │
+    │                              │
+    └── format-specific cleaning ──┘
 ```
 
-Where:
+After preprocessing, both datasets are converted into the same canonical representation:
 
-* `X` is the x-coordinate of the MSI pixel.
-* `Y` is the y-coordinate of the MSI pixel.
-* Each remaining column represents a molecular feature, often an `m/z` value.
-* Each row represents one spatial measurement point.
+```text
+X | Y | molecular intensity features
+```
 
-The clustering pipeline expects spatial coordinates and numerical molecular intensity values.
+For the current datasets:
+
+```text
+Sample 1
+100 total columns
+= X + Y + 98 molecular features
+
+Sample 2
+3002 total columns
+= X + Y + 3000 molecular features
+```
+
+This allows the downstream PCA, clustering, evaluation and visualization logic to operate consistently despite differences in the original data exports.
+
+---
+
+## PCA Dimensionality Reduction
+
+MSI data can contain hundreds or thousands of molecular-intensity features per spatial observation.
+
+PCA is initially computed using up to:
+
+```python
+total_components = 96
+```
+
+The minimum number of components required to retain the configured explained-variance threshold is then selected automatically:
+
+```python
+explained_variance_threshold = 99
+```
+
+For the two included datasets:
+
+```text
+Sample 1 → 17 PCA components
+Sample 2 →  5 PCA components
+```
+
+### Explained Variance
+
+#### Sample 1
+
+![Sample 1 PCA](figures/pca_plot_20191017_liver_4v_75um_Analyte_1AFAMM_1_pixel_intensities.png)
+
+#### Sample 2
+
+![Sample 2 PCA](figures/pca_plot_Sample_PL.png)
+
+---
+
+## Clustering Evaluation
+
+Candidate K-means solutions are evaluated across:
+
+```text
+k = 2 ... 10
+```
+
+using three internal clustering metrics together with cross-seed stability analysis.
+
+| Metric | Interpretation |
+| --- | --- |
+| Silhouette score | Higher indicates stronger within-cluster cohesion and between-cluster separation |
+| Davies-Bouldin index | Lower indicates better-separated clusters |
+| Calinski-Harabasz score | Higher indicates stronger separation relative to within-cluster dispersion |
+| Adjusted Rand Index | Measures agreement between clustering solutions generated from different random initializations |
+
+Full metric tables are stored in:
+
+```text
+reports/
+├── sample_1_clustering_metrics.csv
+└── sample_2_clustering_metrics.csv
+```
+
+### Sample 1
+
+| k | Silhouette | Davies-Bouldin | Calinski-Harabasz |
+| ---: | ---: | ---: | ---: |
+| 2 | 0.799 | 0.349 | 87,163 |
+| 3 | 0.740 | 0.671 | 82,844 |
+| 4 | 0.706 | 0.815 | 77,386 |
+
+### Sample 2
+
+| k | Silhouette | Davies-Bouldin | Calinski-Harabasz |
+| ---: | ---: | ---: | ---: |
+| 2 | 0.740 | 0.420 | 2,982 |
+| 3 | 0.694 | 0.622 | 3,287 |
+| 4 | 0.654 | 0.733 | 3,139 |
+
+The tables make the trade-off explicit: coarser clusterings score better on several geometric criteria, while `k=4` provides additional spatial resolution and remains quantitatively strong and highly reproducible.
+
+For `k=4`, the stability analysis produced:
+
+```text
+Sample 1
+mean ARI: 0.9983
+min ARI:  0.9967
+max ARI:  1.0000
+
+Sample 2
+mean ARI: 0.9986
+min ARI:  0.9972
+max ARI:  1.0000
+```
+
+These values indicate that the selected segmentation is highly reproducible with respect to K-means initialization.
+
+---
+
+## Final Cluster Maps
+
+### Sample 1
+
+![Sample 1 final clustering](figures/processed_20191017_liver_4v_75um_Analyte_1AFAMM_1_pixel_intensities_cluster_labels_heatmap.png)
+
+### Sample 2
+
+![Sample 2 final clustering](figures/processed_Sample_PL_cluster_labels_heatmap.png)
+
+Cluster IDs are arbitrary K-means labels and do not imply correspondence between cluster number and biological identity.
+
+---
 
 ## Installation
+
+### Requirements
+
+- Python 3.12 or 3.13
 
 Clone the repository:
 
 ```bash
-git clone https://github.com/LittleBigPluton/Mass-Spectrometry-Imaging-Clustering.git
-cd Mass-Spectrometry-Imaging-Clustering
+git clone https://github.com/LittleBigPluton/desi-msi-clustering.git
+cd desi-msi-clustering
 ```
 
-Create a virtual environment:
+Create and activate a virtual environment:
 
 ```bash
-python3 -m venv venv_msi_clustering
+python3 -m venv venv
+source venv/bin/activate
 ```
 
-Activate the environment:
+Install the package:
 
 ```bash
-source venv_msi_clustering/bin/activate
+python -m pip install --upgrade pip
+pip install -e .
 ```
 
-Install the required Python packages:
+For development:
 
 ```bash
-pip install -r requirements.txt
+pip install -e ".[dev]"
 ```
 
-## Optional System Dependency for Interactive Plots
-
-If `plt.show()` gives a warning such as:
-
-```text
-FigureCanvasAgg is non-interactive, and thus cannot be shown
-```
-
-install Tkinter on Linux:
-
-```bash
-sudo apt update
-sudo apt install python3-tk
-```
-
-Test Tkinter with:
-
-```bash
-python -m tkinter
-```
-
-`tkinter` is usually not added to `requirements.txt` because it is installed as a system package, not through `pip`.
-
-## Configuration
-
-Project paths and main parameters can be defined in `config.py`.
-
-Example:
-
-```python
-from pathlib import Path
-
-project_root = Path(__file__).resolve().parent
-
-data_dir = project_root / "data"
-raw_data_dir = data_dir / "raw"
-processed_data_dir = data_dir / "processed"
-
-figs_dir = project_root / "figures"
-
-total_components = 96
-explained_variance_threshold = 99
-maximum_clusters = 10
-```
-
-Suggested parameter meanings:
-
-```python
-# Total number of PCA components to compute from the original feature space
-total_components = 96
-
-# Target cumulative explained variance percentage used to select retained PCA components
-explained_variance_threshold = 95
-
-# Maximum number of K-means clusters tested during the elbow method
-maximum_clusters = 10
-```
+---
 
 ## Usage
 
-Run the full clustering pipeline:
+Run the complete example workflow with:
 
 ```bash
-python3 run_clustering.py
+desi-msi-clustering
 ```
 
-A typical workflow inside `run_clustering.py` may look like:
-
-```python
-from config import total_components, explained_variance_threshold, maximum_clusters, raw_data_dir, processed_data_dir
-from msi_clustering.clustering import cluster
-
-file_path = raw_data_dir / "processed_Sample_PL.txt"
-
-sample_data = cluster(file_path)
-
-sample_data.create_data_frame()
-sample_data.apply_PCA(n_components=total_components)
-sample_data.get_PCA_features(explained_variance_threshold)
-sample_data.find_optimal_clusters(max_k=maximum_clusters)
-sample_data.apply_kmeans()
-sample_data.plot_heatmap("cluster_labels", show=True, save=True)
-```
-
-## Data Preprocessing
-
-Some MSI export files may require cleaning before clustering. The preprocessing step can be skipped if the data is already in the expected format:
+The command performs:
 
 ```text
-X | Y | molecular feature 1 | molecular feature 2 | ...
+format-specific preprocessing
+→ PCA reduction
+→ candidate clustering evaluation
+→ spatial comparison
+→ stability analysis
+→ final K-means clustering
+→ figure and report generation
 ```
 
-The project includes preprocessing logic for different example file structures, such as:
-
-* Transposed MSI feature tables.
-* Tab-separated MSI export files.
-* Files requiring removal of metadata columns.
-* Files requiring extraction of X/Y coordinates from index values.
-
-Processed files should be saved under:
+Main analysis parameters are defined in:
 
 ```text
-data/processed/
+src/msi_clustering/config.py
 ```
 
-Raw files should be kept under:
+Current defaults include:
+
+```python
+total_components = 96
+explained_variance_threshold = 99
+
+n_clusters = 4
+minimum_clusters = 2
+maximum_clusters = 10
+random_state = 0
+
+comparison_clusters = (2, 3, 4)
+stability_random_states = (0, 1, 2, 3, 4)
+```
+
+---
+
+## Expected Data Representation
+
+After preprocessing, each observation represents one spatial MSI measurement:
 
 ```text
-data/raw/
+X       Y       m/z_1       m/z_2       ...       m/z_n
+0.0     0.0     120.4       84.1                  15.8
+0.0     1.0      98.7       91.3                  11.2
+...
 ```
 
-This keeps the original data separate from cleaned analysis-ready data.
+where:
 
-## PCA Dimensionality Reduction <sup>[1](https://en.wikipedia.org/wiki/Principal_component_analysis)</sup><sup>,[2](https://www.geeksforgeeks.org/machine-learning/reduce-data-dimentionality-using-pca-python/)</sup>
+- `X` and `Y` identify the spatial measurement location;
+- molecular columns contain ion-intensity measurements;
+- each row represents one spatial observation.
 
-MSI datasets can contain a large number of molecular features. PCA is used to reduce the dimensionality of the dataset while preserving the main variance structure.
+The preprocessing module currently supports the two export layouts used by the example datasets:
 
-The PCA step computes a selected number of principal components:
+- transposed MSI feature tables;
+- tab-separated MSI exports.
 
-```python
-sample_data.apply_PCA(n_components=total_components)
-```
+---
 
-The explained variance function helps determine how many components are needed to represent a desired percentage of total variance:
-
-```python
-sample_data.get_PCA_features(explained_variance_threshold)
-```
-
-For example, an explained variance threshold of `99` means that the analysis checks how many PCA components are needed to explain approximately 99% of the total variance. After PCA components plot showed up, 
-a user input is saking on the terminal for desired total number of the features that will be used to analyze clustering. 15 components are sufficient to explain 99% of the total variance at the sample data 
-so 15 (or more desired but not necessary) should be entered on the terminal. 
-
- ![Sample PCA plot](figures/pca_plot_20191017_liver_4v_75um_Analyte_1AFAMM_1_pixel_intensities.png)
- ![Sample PCA plot](https://github.com/LittleBigPluton/Mass-Spectrometry-Imaging-Clustering/blob/main/figures/pca_plot_Sample_PL.png)
- 
-## K-means Clustering <sup>[3](https://en.wikipedia.org/wiki/K-means_clustering)</sup><sup>,[4](https://www.geeksforgeeks.org/machine-learning/k-means-clustering-introduction/)</sup>
-
-After PCA, K-means clustering is applied to the reduced feature space. The clustering step assigns each spatial data point to a cluster:
-
-```python
-sample_data.apply_kmeans()
-```
-
-The resulting cluster labels are added to the DataFrame as:
+## Project Structure
 
 ```text
-cluster_labels
+desi-msi-clustering/
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+│
+├── data/
+│   ├── raw/
+│   └── processed/
+│
+├── figures/
+│   └── comparison/
+│
+├── reports/
+│   ├── sample_1_clustering_metrics.csv
+│   └── sample_2_clustering_metrics.csv
+│
+├── src/
+│   └── msi_clustering/
+│       ├── __init__.py
+│       ├── clustering.py
+│       ├── config.py
+│       ├── evaluation.py
+│       ├── pipeline.py
+│       ├── processing.py
+│       └── visualization.py
+│
+├── tests/
+│   ├── test_clustering.py
+│   ├── test_evaluation.py
+│   ├── test_processing.py
+│   └── test_visualization.py
+│
+├── LICENSE
+├── README.md
+└── pyproject.toml
 ```
 
-These labels can then be used to visualize spatial tissue regions.
+---
 
-## Elbow Method <sup>[5](https://en.wikipedia.org/wiki/Elbow_method_(clustering))</sup><sup>,[6](https://www.geeksforgeeks.org/machine-learning/elbow-method-for-optimal-value-of-k-in-kmeans/)</sup>
+## Code Quality
 
-The elbow method is used to inspect how K-means inertia changes with different numbers of clusters:
+The repository includes automated unit testing, linting, static type checking and continuous integration.
 
-```python
-sample_data.find_optimal_clusters(max_k=maximum_clusters)
-```
-
-The goal is to identify a reasonable number of clusters where the decrease in inertia starts to slow down.
-
-![Elbow plot of sample data](figures/elbow_plot_20191017_liver_4v_75um_Analyte_1AFAMM_1_pixel_intensities.png)
-![Elbow plot of sample data](figures/elbow_plot_Sample_PL.png)
-## Visualization
-
-The project supports heatmap-style visualization using spatial `X` and `Y` coordinates.
-
-Example:
-
-```python
-sample_data.plot_heatmap("cluster_labels", show=True, save=True)
-```
-
-For molecular intensity visualization:
-
-```python
-sample_data.plot_heatmap("123.456", show=True, save=True)
-```
-
-For cluster maps:
-
-* Each coordinate position is colored according to its assigned K-means cluster.
-* The Y-axis orientation can be set so that spatial coordinates are displayed in a coordinate-plane-like layout.
-* Generated figures can be saved automatically to the `figs/` directory.
-
-![Sample cluster heatmap](figures/processed_20191017_liver_4v_75um_Analyte_1AFAMM_1_pixel_intensities_cluster_labels_heatmap.png)
-![Sample cluster heatmap](figures/processed_Sample_PL_cluster_labels_heatmap.png)
-## Outputs
-
-Possible generated outputs include:
-
-```text
-figs/
-├── Sample_PL_cluster_labels_heatmap.png
-├── Sample_PL_pca_explained_variance.png
-└── Sample_PL_elbow_method.png
-```
-
-Output names may vary depending on the input file and the plotting function.
-
-## Notes on Git Tracking
-
-Recommended files and folders to track:
-
-```text
-README.md
-LICENSE
-requirements.txt
-config.py
-run_clustering.py
-msi_clustering/
-data/raw/.gitkeep
-data/processed/.gitkeep
-figs/.gitkeep
-```
-
-Recommended files and folders to ignore:
-
-```text
-__pycache__/
-*.pyc
-venv*/
-.env
-data/raw/*
-data/processed/*
-figs/*.png
-```
-
-If sample data or output figures are intentionally included for demonstration, they can be committed. Otherwise, large raw data files and generated figures should usually be excluded from version control.
-
-## Troubleshooting
-
-### `FigureCanvasAgg is non-interactive`
-
-This means Matplotlib is using a non-interactive backend. If you want plot windows to open, install Tkinter:
+Local checks:
 
 ```bash
-sudo apt install python3-tk
+ruff check .
+mypy
+pytest -v
 ```
 
-Or save plots directly using:
+Current test suite:
 
-```python
-plt.savefig("figure.png", dpi=300, bbox_inches="tight")
+```text
+17 tests passing
 ```
 
-### `DataFrame.pivot() takes 1 positional argument but 4 were given`
+GitHub Actions runs the quality checks on:
 
-Newer pandas versions require keyword arguments for `pivot()`:
-
-```python
-pivot_table = self.data.pivot(index="Y", columns="X", values=value)
+```text
+Python 3.12
+Python 3.13
 ```
 
-### `DataFrame is highly fragmented`
+Ruff is used for linting only; source formatting is intentionally not enforced by the CI workflow.
 
-This can happen when many columns are inserted one by one. A simple fix before adding a new column is:
+---
 
-```python
-self.data = self.data.copy()
-self.data["cluster_labels"] = self.cluster_labels
-```
+## Data Provenance
 
-For larger workflows, it is better to collect new columns first and add them together with `pd.concat(axis=1)`.
+This repository contains two DESI-MSI example datasets used to demonstrate the preprocessing and clustering workflow.
 
-## Future Improvements
+- **Sample 1:** Public DESI-MSI dataset  
+  **Source:** [METASPACE - Emrys Jones](https://metaspace2020.org/annotations?grp=5727e83d-e1dd-11e8-9d75-ff97c45816a5&ds=2019-10-21_09h57m26s&q=liver&cols=3,5&sort=mz)
 
-Possible improvements for the project:
+- **Sample 2:** Dataset obtained during an internship
 
-* Add command-line arguments for selecting input files and parameters.
-* Add automated tests for preprocessing and clustering functions.
-* Add example notebooks for exploratory analysis.
-* Add support for additional MSI file formats.
-* Add comparison with other clustering methods such as DBSCAN or Gaussian Mixture Models.
-* Add quantitative validation metrics for clustering quality.
-* Add documentation for each class and method.
-* Add sample output figures to the README.
-* Add a reproducible example dataset or small demo file.
+The datasets are used for unsupervised methodological demonstration. No manually annotated tissue labels are used as clustering targets.
 
-## Technologies Used
+---
 
-* Python
-* pandas
-* NumPy
-* scikit-learn
-* Matplotlib
-* PCA
-* K-means clustering
+## Limitations
+
+This project performs exploratory unsupervised segmentation.
+
+Important limitations include:
+
+- no manually annotated tissue ground truth is used;
+- internal clustering metrics measure geometric properties rather than biological correctness;
+- cluster IDs have no inherent biological meaning;
+- `k=4` is a working exploratory spatial resolution rather than a universally optimal number of tissue classes;
+- preprocessing currently targets the example MSI export formats included in the repository.
+
+External histology or expert annotations would be required to validate whether individual clusters correspond to specific biological tissue structures.
+
+---
+
+## Technologies
+
+Python · NumPy · pandas · scikit-learn · Matplotlib · PCA · K-means · pytest · Ruff · mypy · GitHub Actions
+
+---
 
 ## License
 
-This project is licensed under the MIT License.
-
-## Author
-
-Created by [LittleBigPluton](https://github.com/LittleBigPluton).
-
-## References
-1. [Principal Component Analysis - Wikipedia](https://en.wikipedia.org/wiki/Principal_component_analysis)
-2. [Reduce Data Dimentionality by Using PCA - GeeksforGeeks](https://www.geeksforgeeks.org/machine-learning/reduce-data-dimentionality-using-pca-python/)
-3. [K-means Clustering - Wikipedia](https://en.wikipedia.org/wiki/K-means_clustering)
-4. [K-means Clustering Introduction - GeeksforGeeks](https://www.geeksforgeeks.org/machine-learning/k-means-clustering-introduction/)
-5. [Elbow Method - Wikipedia](https://en.wikipedia.org/wiki/Elbow_method_(clustering))
-6. [Elbow Method for Optimal Value of k in K-means - GeekforGeeks](https://www.geeksforgeeks.org/machine-learning/elbow-method-for-optimal-value-of-k-in-kmeans/)
+This project is licensed under the [MIT License](LICENSE).
